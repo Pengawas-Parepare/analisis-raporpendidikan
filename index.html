@@ -275,6 +275,8 @@
   table.rkjp-sheet td.tot{ white-space:normal; word-break:break-word; }
   table.rkjp-sheet tfoot td{ font-weight:700; background:#fafafa; }
   .sheet-note{ text-align:center; font-style:italic; color:#666; font-size:12.5px; margin-top:12px; }
+  /* kertas legal lanskap saat dicetak */
+  @page{ size:14in 8.5in; margin:1.2cm; }
   /* teks tabel lebih hitam agar mudah terbaca */
   table td, table th{ color:#000; }
   table.roster th, table.indikator th{ color:#111; font-weight:600; }
@@ -2985,7 +2987,7 @@ function reportHtml(list,only){
     h+=ttdHtml(sc,p);
     h+='</div>';
   });
-  return '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>Laporan Pendampingan</title><style>@page{size:A4 landscape;margin:1.5cm}body{font-family:Arial,sans-serif;font-size:10pt}h2{font-size:15pt;margin:0 0 8px}h3{font-size:12pt;margin:16px 0 6px}table{border-collapse:collapse;width:100%}table.id{width:auto;margin-bottom:8px}table.id td{padding:2px 10px 2px 0;border:none}table.id td:first-child{font-weight:bold}table.d th,table.d td{border:1px solid #000;padding:3px 5px;vertical-align:top;text-align:left}table.d th{background:#e8e8e8}.ttd{width:100%;margin-top:28px;page-break-inside:avoid}.ttd td{border:none;text-align:center;vertical-align:top;width:50%;padding:2px}.tim{width:100%;margin-top:22px;page-break-inside:avoid}.tim th,.tim td{border:1px solid #000;padding:6px;text-align:left}</style></head><body>'+h+'</body></html>';
+  return '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>Laporan Pendampingan</title><style>@page Section1{size:14in 8.5in;mso-page-orientation:landscape;margin:1.2cm}@page{size:14in 8.5in;margin:1.2cm}div.Section1{page:Section1}body{font-family:Arial,sans-serif;font-size:10pt}h2{font-size:15pt;margin:0 0 8px}h3{font-size:12pt;margin:16px 0 6px}table{border-collapse:collapse;width:100%}table.id{width:auto;margin-bottom:8px}table.id td{padding:2px 10px 2px 0;border:none}table.id td:first-child{font-weight:bold}table.d th,table.d td{border:1px solid #000;padding:3px 5px;vertical-align:top;text-align:left}table.d th{background:#e8e8e8}.ttd{width:100%;margin-top:28px;page-break-inside:avoid}.ttd td{border:none;text-align:center;vertical-align:top;width:50%;padding:2px}.tim{width:100%;margin-top:22px;page-break-inside:avoid}.tim th,.tim td{border:1px solid #000;padding:6px;text-align:left}</style></head><body><div class="Section1">'+h+'</div></body></html>';
 }
 function ttdHtml(sc,p){
   var dots='..............................', nm=function(v){ return v?xh(v):dots; };
