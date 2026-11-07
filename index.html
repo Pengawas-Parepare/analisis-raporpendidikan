@@ -3195,6 +3195,19 @@ function fbBoot(){
     });
   });
 }
+function hapusAkun(uid,u,done){
+  if(!confirm('Hapus akun '+(u.nama||u.email)+'? Akses dicabut. Jika sudah memilih sekolah, data sekolah dikembalikan ke daftar sekolah dan sekolah itu dapat dipilih operator lain.')) return;
+  dbx.doc('claims/'+uid).get().then(function(c){
+    if(!c.exists) return;
+    return dbx.doc('edits/'+uid).get().then(function(e){
+      var sid=c.data().schoolId, sc=(e.exists&&e.data().school)||null;
+      if(sc&&sid){ var o=JSON.parse(JSON.stringify(sc)); delete o.kepsekUid; return dbx.doc('schools/'+sid).set(o); }
+    });
+  }).then(function(){ return Promise.all([dbx.doc('claims/'+uid).delete(),dbx.doc('edits/'+uid).delete(),dbx.doc('balasan/'+uid).delete()]); })
+  .then(function(){ return dbx.doc('users/'+uid).delete(); })
+  .then(function(){ state.data.schools.forEach(function(sc){ if(sc.kepsekUid===uid) delete sc.kepsekUid; }); done(); })
+  .catch(function(e){ console.error(e); alert('Gagal menghapus akun.'); });
+}
 function renderAkunModal(){
   var overlay=el('div',{class:'modal-overlay'}), modal=el('div',{class:'modal',style:'max-width:780px'}), box=el('div',{style:'overflow-x:auto'},[]);
   modal.appendChild(el('h3',{},['Akun pengguna']));
@@ -3209,7 +3222,7 @@ function renderAkunModal(){
       snap.docs.sort(function(a,b){ return (a.data().approved===true?1:0)-(b.data().approved===true?1:0); }).forEach(function(d){
         var u=d.data(), self=d.id===myId, adm=u.role==='admin', cell=el('td',{},[]);
         function act(label,patch,ask){ cell.appendChild(el('button',{class:'btn secondary',style:'padding:3px 10px;font-size:12px;margin-right:4px',onclick:function(){ if(ask&&!confirm(ask)) return; dbx.doc('users/'+d.id).update(patch).then(load).catch(function(){ alert('Gagal mengubah akun.'); }); }},[label])); }
-        if(!self){ if(!adm){ if(u.approved!==true) act('Setujui',{approved:true}); else act('Cabut',{approved:false}); act('Jadikan pengawas',{role:'admin',approved:true},'Jadikan '+(u.nama||u.email)+' sebagai pengawas (admin)? Ia akan dapat mengelola semua data.'); } else act('Jadikan operator',{role:'operator'},'Ubah '+(u.nama||u.email)+' menjadi operator?'); }
+        if(!self){ if(!adm){ if(u.approved!==true) act('Setujui',{approved:true}); else act('Cabut',{approved:false}); act('Jadikan pengawas',{role:'admin',approved:true},'Jadikan '+(u.nama||u.email)+' sebagai pengawas (admin)? Ia akan dapat mengelola semua data.'); } else act('Jadikan operator',{role:'operator'},'Ubah '+(u.nama||u.email)+' menjadi operator?'); cell.appendChild(el('button',{class:'btn danger',style:'padding:3px 10px;font-size:12px',onclick:function(){ hapusAkun(d.id,u,load); }},['Hapus'])); }
         tb.appendChild(el('tr',{},[el('td',{},[(u.nama||'')+(self?' (Anda)':'')]),el('td',{},[u.email||'']),el('td',{},[adm?'Pengawas':'Operator']),el('td',{},[adm?'Aktif':(u.approved===true?'Disetujui':'Menunggu')]),cell]));
       });
       t.appendChild(tb); box.appendChild(t);
