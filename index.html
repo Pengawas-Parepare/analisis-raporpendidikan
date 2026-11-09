@@ -2277,6 +2277,11 @@ function renderRkas(){
   bar.appendChild(el('button',{class:'btn secondary',onclick:function(){ addRkasRow(sc,{sumberDana:'',volume:'',satuan:''}); save(); render(); }},['+ Tambah baris']));
   bar.appendChild(el('button',{class:'btn secondary',title:'Mengisi semua sel yang masih kosong dengan data contoh. Sel yang sudah Anda isi tidak diubah.',onclick:function(){ var n=arkasContoh(sc); save(); state.rkasSyncMsg=n+' sel kosong diisi contoh. Ganti dengan data sekolah Anda, atau klik Hapus isian contoh.'; render(); }},['Isi sel kosong (contoh)']));
   if(sc.rkas.some(function(r){ return r._ex; })) bar.appendChild(el('button',{class:'btn ghost',title:'Mengosongkan kembali sel yang diisi contoh dan belum Anda ubah.',onclick:function(){ var n=arkasHapusContoh(sc); save(); state.rkasSyncMsg=n+' isian contoh dihapus.'; render(); }},['Hapus isian contoh']));
+  bar.appendChild(el('button',{class:'btn ghost',title:'Menghapus semua baris berlatar kuning, yaitu baris yang kegiatannya tidak lagi berbiaya "Ya" di RKJP.',onclick:function(){
+    var n=sc.rkas.filter(function(r){ return r.orphan; }).length;
+    if(!n){ state.rkasSyncMsg='Tidak ada baris berwarna.'; render(); return; }
+    if(!confirm('Hapus '+n+' baris berwarna (kuning)?')) return;
+    sc.rkas=sc.rkas.filter(function(r){ return !r.orphan; }); save(); state.rkasSyncMsg=n+' baris berwarna dihapus.'; render(); }},['Hapus semua baris berwarna']));
   bar.appendChild(el('button',{class:'btn ghost',onclick:function(){ window.print(); }},['Cetak tabel ARKAS']));
   panel.appendChild(bar);
   if(state.rkasSyncMsg){ panel.appendChild(el('div',{class:'no-print',style:'font-size:13px;color:var(--berdaya);margin:-4px 0 12px'},[state.rkasSyncMsg])); state.rkasSyncMsg=null; }
@@ -2869,6 +2874,17 @@ var RKJP_EX=[
   {indikator:'Kesehatan peserta didik',akar:'Perlengkapan UKS dan P3K belum lengkap',kegiatan:'Penguatan layanan kesehatan sekolah (UKS)',impl:[['Pengadaan obat P3K dan perlengkapan UKS','Ya']]},
   {indikator:'Layanan perpustakaan',akar:'Koleksi buku perpustakaan terbatas dan kurang menarik',kegiatan:'Penguatan layanan perpustakaan sekolah',impl:[['Pengadaan buku bacaan pengayaan','Ya']]}
 ];
+function rkjpHapusKosong(sc){
+  var n=0;
+  sc.rkjp=(sc.rkjp||[]).filter(function(it){
+    var impl=it.impl||[];
+    var ada=it.indikator||it.akar||it.kegiatan||impl.some(function(im){ return im.uraian||im.biaya; });
+    if(!ada){ n++; return false; }
+    if(impl.length>1){ var isi=impl.filter(function(im){ return im.uraian||im.biaya; }); if(isi.length&&isi.length<impl.length){ n+=impl.length-isi.length; it.impl=isi; } }
+    return true;
+  });
+  return n;
+}
 function rkjpSig(it){ return [it.indikator,it.akar,it.kegiatan].concat((it.impl||[]).map(function(im){ return im.uraian+'|'+im.biaya; })).join('\u00a6'); }
 /* Mengisi sel kosong dengan contoh kebutuhan sekolah dan menambah baris prioritas sampai 10 baris. */
 function rkjpContoh(sc,total){
@@ -2969,9 +2985,13 @@ function renderRkjp(){
       save(); render(); }},['Isi dari program RKT terpilih']));
   }
   bar.appendChild(el('button',{class:'btn secondary',onclick:function(){ rkjpAddFrom(sc,{}); save(); render(); }},['+ Tambah baris prioritas']));
-  bar.appendChild(el('label',{class:'no-print',style:'font-size:13px;display:inline-flex;align-items:center;gap:6px'},['Jumlah baris contoh:',(function(){ var inp=el('input',{type:'number',min:'1',max:String(RKJP_EX.length),value:String(state.rkjpContohN||10),style:'width:64px'}); inp.addEventListener('change',function(){ var v=parseInt(inp.value,10); state.rkjpContohN=Math.max(1,Math.min(RKJP_EX.length,isNaN(v)?10:v)); inp.value=String(state.rkjpContohN); }); return inp; })()]));
-  bar.appendChild(el('button',{class:'btn secondary',title:'Mengisi sel kosong dengan contoh kebutuhan sekolah (listrik, air PDAM, belanja pegawai, perbaikan sarana, dan lainnya) dan menambah baris sampai jumlah yang dipilih. Isian yang sudah Anda tulis tidak diubah.',onclick:function(){ var N=state.rkjpContohN||10, n=rkjpContoh(sc,N); save(); state.rkjpMsg=n+' isian contoh diisi (sampai '+N+' baris). Baris dengan biaya "Ya" otomatis masuk ke ARKAS; di ARKAS klik "Isi sel kosong (contoh)" untuk melengkapi anggarannya. Baris prioritas bisa ditambah lagi tanpa batas dengan tombol "+ Tambah baris prioritas".'; render(); }},['Isi contoh kebutuhan sekolah']));
+  bar.appendChild(el('button',{class:'btn secondary',title:'Mengisi sel kosong dengan contoh kebutuhan sekolah (listrik, air PDAM, belanja pegawai, perbaikan sarana, dan lainnya) dan menambah baris sampai 20 baris. Isian yang sudah Anda tulis tidak diubah.',onclick:function(){ var N=RKJP_EX.length, n=rkjpContoh(sc,N); save(); state.rkjpMsg=n+' isian contoh diisi (sampai '+N+' baris). Baris dengan biaya "Ya" otomatis masuk ke ARKAS; di ARKAS klik "Isi sel kosong (contoh)" untuk melengkapi anggarannya. Baris prioritas bisa ditambah lagi tanpa batas dengan tombol "+ Tambah baris prioritas".'; render(); }},['Isi contoh kebutuhan sekolah']));
   if(rkjpHasContoh(sc)) bar.appendChild(el('button',{class:'btn ghost',title:'Menghapus baris contoh yang belum diubah dan mengosongkan sel yang diisi contoh.',onclick:function(){ var n=rkjpHapusContoh(sc); save(); state.rkjpMsg=n+' isian contoh dihapus.'; render(); }},['Hapus isian contoh']));
+  bar.appendChild(el('button',{class:'btn ghost',title:'Menghapus semua baris prioritas yang masih kosong, dan rincian kegiatan yang kosong pada baris yang sudah berisi.',onclick:function(){
+    var n=rkjpHapusKosong(JSON.parse(JSON.stringify(sc)));
+    if(!n){ state.rkjpMsg='Tidak ada baris kosong.'; render(); return; }
+    if(!confirm('Hapus '+n+' baris kosong?')) return;
+    rkjpHapusKosong(sc); save(); state.rkjpMsg=n+' baris kosong dihapus.'; render(); }},['Hapus semua baris kosong']));
   bar.appendChild(el('button',{class:'btn ghost',onclick:function(){ window.print(); }},['Cetak / simpan sebagai PDF']));
   panel.appendChild(bar);
   if(state.rkjpMsg){ panel.appendChild(el('div',{class:'no-print',style:'font-size:13px;color:var(--berdaya);margin:-6px 0 12px'},[state.rkjpMsg])); state.rkjpMsg=''; }
